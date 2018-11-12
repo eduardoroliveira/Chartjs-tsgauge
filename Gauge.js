@@ -7,7 +7,30 @@
 	GaugeChartHelper.prototype.setup = function (chart, config) {
 		this.chart = chart;
 		this.ctx = chart.ctx;
-		this.limits = config.data.datasets[0].gaugeLimits;
+		
+		if (Array.isArray(config.data.datasets[0].gaugeLimits)){
+			//keeping previous behavior
+			this.limits = config.data.datasets[0].gaugeLimits;
+		} else {
+			// if min and max were set in gaugeLimits Object instead of 
+			// an array of gauge limits, the gauge limits will automatically be 
+			// set depending on the colors defined in the backgroundColor array
+			let minLimit = config.data.datasets[0].gaugeLimits.min;
+			let maxLimit = config.data.datasets[0].gaugeLimits.max;
+			let limitDiff= maxLimit - minLimit;
+			let bgLength = config.data.datasets[0].backgroundColor.length;
+			let range = limitDiff / bgLength;
+			let limit = Math.floor(minLimit + range);
+			this.limits = [minLimit];
+			for (let x = 1; x <= bgLength; x++){
+				if (x === bgLength && limit !== maxLimit){
+					limit = maxLimit;
+				}
+				this.limits[x] = limit;
+				limit = Math.floor(limit + range);
+			}
+		}
+		
 		this.data = config.data.datasets[0].gaugeData;
 		this.fontSize = chart.options.defaultFontSize;
 		this.fontStyle = chart.options.defaultFontFamily;
